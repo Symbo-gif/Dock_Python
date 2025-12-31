@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "d2p"
+version = "0.1.0"
+description = "Docker-to-Python conversion system"
+requires-python = ">=3.9"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "click>=8.0",
+    "psutil>=5.9",
+    "tenacity>=8.0",
+    "python-dotenv>=1.0",
+    "jinja2>=3.0",
+    "black>=23.0",
+]
+
+[project.scripts]
+d2p = "d2p.CLI.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
