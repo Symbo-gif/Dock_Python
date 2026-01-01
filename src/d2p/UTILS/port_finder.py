@@ -22,7 +22,7 @@ def get_free_port() -> int:
     Finds a free port on localhost.
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
+        s.bind(('127.0.0.1', 0))
         return s.getsockname()[1]
 
 def is_port_free(port: int) -> bool:
@@ -31,7 +31,7 @@ def is_port_free(port: int) -> bool:
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
-            s.bind(('', port))
+            s.bind(('127.0.0.1', port))
             return True
         except socket.error:
             return False
