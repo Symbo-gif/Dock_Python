@@ -260,28 +260,29 @@ class VolumeManager:
             os.makedirs(full_path, exist_ok=True)
             
             # On Linux, try to mount actual tmpfs
-            if self._is_linux and os.geteuid() == 0:
+            if self._is_linux:
                 try:
-                    import ctypes
-                    libc = ctypes.CDLL("libc.so.6", use_errno=True)
-                    
-                    # Parse options
-                    mount_opts = ""
-                    if opts:
-                        mount_opts = opts
-                    
-                    ret = libc.mount(
-                        b"tmpfs",
-                        full_path.encode('utf-8'),
-                        b"tmpfs",
-                        0,
-                        mount_opts.encode('utf-8') if mount_opts else None
-                    )
-                    
-                    if ret == 0:
-                        mounted.append(full_path)
-                        print(f"Mounted tmpfs at {full_path}")
-                        continue
+                    if os.geteuid() == 0:
+                        import ctypes
+                        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+                        
+                        # Parse options
+                        mount_opts = ""
+                        if opts:
+                            mount_opts = opts
+                        
+                        ret = libc.mount(
+                            b"tmpfs",
+                            full_path.encode('utf-8'),
+                            b"tmpfs",
+                            0,
+                            mount_opts.encode('utf-8') if mount_opts else None
+                        )
+                        
+                        if ret == 0:
+                            mounted.append(full_path)
+                            print(f"Mounted tmpfs at {full_path}")
+                            continue
                 except Exception as e:
                     print(f"Warning: Failed to mount tmpfs at {full_path}: {e}")
             

@@ -264,7 +264,12 @@ def info():
     
     # Check isolation capabilities
     is_linux = sys.platform.startswith('linux')
-    is_root = os.geteuid() == 0 if is_linux else False
+    is_root = False
+    if is_linux:
+        try:
+            is_root = os.geteuid() == 0
+        except AttributeError:
+            pass
     
     click.echo(f"\nIsolation capabilities:")
     click.echo(f"  Linux: {'Yes' if is_linux else 'No'}")
