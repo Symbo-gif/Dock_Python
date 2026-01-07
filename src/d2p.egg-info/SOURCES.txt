@@ -1,3 +1,5 @@
+LICENSE
+README.md
 pyproject.toml
 setup.py
 src/d2p/__init__.py
@@ -18,6 +20,7 @@ src/d2p/MANAGERS/__init__.py
 src/d2p/MANAGERS/environment_manager.py
 src/d2p/MANAGERS/health_monitor.py
 src/d2p/MANAGERS/log_aggregator.py
+src/d2p/MANAGERS/network_manager.py
 src/d2p/MANAGERS/process_manager.py
 src/d2p/MANAGERS/service_orchestrator.py
 src/d2p/MANAGERS/volume_manager.py
@@ -35,3 +38,5 @@ src/d2p/RUNNERS/dependency_resolver.py
 src/d2p/RUNNERS/entrypoint_executor.py
 src/d2p/RUNNERS/process_runner.py
 src/d2p/UTILS/__init__.py
+src/d2p/UTILS/port_finder.py
+src/d2p/UTILS/string_interpolation.py

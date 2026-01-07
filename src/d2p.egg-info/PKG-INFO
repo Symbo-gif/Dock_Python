@@ -3,6 +3,7 @@ Name: d2p
 Version: 0.1.0
 Summary: Docker-to-Python conversion system
 Requires-Python: >=3.9
+License-File: LICENSE
 Requires-Dist: pydantic>=2.0
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: click>=8.0
@@ -11,3 +12,4 @@ Requires-Dist: tenacity>=8.0
 Requires-Dist: python-dotenv>=1.0
 Requires-Dist: jinja2>=3.0
 Requires-Dist: black>=23.0
+Dynamic: license-file
