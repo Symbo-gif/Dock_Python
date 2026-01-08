@@ -20,10 +20,12 @@ import os
 from typing import List, Dict, Optional
 import sys
 
+
 class ProcessRunner:
     """
     Manages the execution of a single system process.
     """
+
     def __init__(self, name: str, log_file: Optional[str] = None):
         """
         Initializes the process runner.
@@ -34,12 +36,11 @@ class ProcessRunner:
         """
         self.name = name
         self.log_file = log_file
-        self.process = None
+        self.process: Optional[subprocess.Popen[str]] = None
 
-    def start(self, 
-              command: List[str], 
-              env: Dict[str, str], 
-              working_dir: Optional[str] = None):
+    def start(
+        self, command: List[str], env: Dict[str, str], working_dir: Optional[str] = None
+    ):
         """
         Starts the process.
 
@@ -48,24 +49,24 @@ class ProcessRunner:
             env (Dict[str, str]): Environment variables for the process.
             working_dir (Optional[str]): Directory to start the process in.
         """
-        
+
         # Ensure working_dir exists
         if working_dir and not os.path.exists(working_dir):
             os.makedirs(working_dir, exist_ok=True)
 
         stdout = sys.stdout
         stderr = sys.stderr
-        
+
         if self.log_file:
             log_dir = os.path.dirname(self.log_file)
             if log_dir:
                 os.makedirs(log_dir, exist_ok=True)
-            self.log_handle = open(self.log_file, 'a')
+            self.log_handle = open(self.log_file, "a")
             stdout = self.log_handle
             stderr = self.log_handle
 
         print(f"[{self.name}] Starting command: {' '.join(command)}")
-        
+
         try:
             self.process = subprocess.Popen(
                 command,
@@ -75,7 +76,7 @@ class ProcessRunner:
                 stderr=stderr,
                 text=True,
                 # Avoid shell=True for security reasons (CWE-78)
-                shell=False
+                shell=False,
             )
         except Exception as e:
             print(f"[{self.name}] Failed to start: {e}")
@@ -96,8 +97,8 @@ class ProcessRunner:
             except subprocess.TimeoutExpired:
                 print(f"[{self.name}] Process did not terminate, killing...")
                 self.process.kill()
-            
-            if hasattr(self, 'log_handle'):
+
+            if hasattr(self, "log_handle"):
                 self.log_handle.close()
 
     def is_running(self) -> bool:

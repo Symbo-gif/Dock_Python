@@ -30,17 +30,19 @@ from ..MODELS.service_definition import VolumeMount
 @dataclass
 class NamedVolume:
     """Represents a named Docker volume."""
+
     name: str
     path: str
     driver: str = "local"
     created_at: str = ""
     labels: Dict[str, str] = field(default_factory=dict)
     options: Dict[str, str] = field(default_factory=dict)
-    
+
 
 @dataclass
 class TmpfsMount:
     """Configuration for a tmpfs mount."""
+
     target: str
     size: Optional[int] = None  # Size in bytes
     mode: int = 0o1777  # Permissions
@@ -50,7 +52,7 @@ class VolumeManager:
     """
     Manages volume mappings including bind mounts, named volumes, and tmpfs.
     """
-    
+
     def __init__(self, base_dir: str = ".", volumes_root: str = ".d2p/volumes"):
         """
         Initializes the volume manager.
@@ -61,18 +63,18 @@ class VolumeManager:
         self.base_dir = os.path.abspath(base_dir)
         self.volumes_root = os.path.abspath(os.path.join(base_dir, volumes_root))
         self.index_file = os.path.join(self.volumes_root, "volumes.json")
-        self._is_linux = sys.platform.startswith('linux')
-        
+        self._is_linux = sys.platform.startswith("linux")
+
         os.makedirs(self.volumes_root, exist_ok=True)
-        
+
         # Load volume index
         self._volumes: Dict[str, NamedVolume] = self._load_index()
-    
+
     def _load_index(self) -> Dict[str, NamedVolume]:
         """Load volume index from disk."""
         if os.path.exists(self.index_file):
             try:
-                with open(self.index_file, 'r') as f:
+                with open(self.index_file, "r") as f:
                     data = json.load(f)
                     return {
                         name: NamedVolume(**vol_data)
@@ -81,7 +83,7 @@ class VolumeManager:
             except (json.JSONDecodeError, IOError):
                 pass
         return {}
-    
+
     def _save_index(self) -> None:
         """Save volume index to disk."""
         data = {
@@ -97,31 +99,35 @@ class VolumeManager:
                 for name, vol in self._volumes.items()
             }
         }
-        with open(self.index_file, 'w') as f:
+        with open(self.index_file, "w") as f:
             json.dump(data, f, indent=2)
-    
-    def create_volume(self, name: str, driver: str = "local",
-                     labels: Optional[Dict[str, str]] = None,
-                     options: Optional[Dict[str, str]] = None) -> NamedVolume:
+
+    def create_volume(
+        self,
+        name: str,
+        driver: str = "local",
+        labels: Optional[Dict[str, str]] = None,
+        options: Optional[Dict[str, str]] = None,
+    ) -> NamedVolume:
         """
         Create a named volume.
-        
+
         Args:
             name: Volume name.
             driver: Volume driver (only 'local' supported).
             labels: Volume labels.
             options: Driver options.
-            
+
         Returns:
             Created NamedVolume object.
         """
         if name in self._volumes:
             return self._volumes[name]
-        
+
         # Create volume directory
         vol_path = os.path.join(self.volumes_root, name)
         os.makedirs(vol_path, exist_ok=True)
-        
+
         volume = NamedVolume(
             name=name,
             path=vol_path,
@@ -130,29 +136,29 @@ class VolumeManager:
             labels=labels or {},
             options=options or {},
         )
-        
+
         self._volumes[name] = volume
         self._save_index()
-        
+
         print(f"Created volume: {name}")
         return volume
-    
+
     def remove_volume(self, name: str, force: bool = False) -> bool:
         """
         Remove a named volume.
-        
+
         Args:
             name: Volume name.
             force: Force removal even if data exists.
-            
+
         Returns:
             True if removed.
         """
         if name not in self._volumes:
             return False
-        
+
         vol = self._volumes[name]
-        
+
         # Remove directory
         if os.path.exists(vol.path):
             if force:
@@ -164,48 +170,52 @@ class VolumeManager:
                 except OSError:
                     print(f"Volume {name} is not empty. Use force=True to remove.")
                     return False
-        
+
         del self._volumes[name]
         self._save_index()
-        
+
         print(f"Removed volume: {name}")
         return True
-    
+
     def list_volumes(self) -> List[NamedVolume]:
         """List all named volumes."""
         return list(self._volumes.values())
-    
+
     def get_volume(self, name: str) -> Optional[NamedVolume]:
         """Get a named volume by name."""
         return self._volumes.get(name)
-    
-    def prepare_volumes(self, mounts: List[VolumeMount], service_working_dir: Optional[str] = None):
+
+    def prepare_volumes(
+        self, mounts: List[VolumeMount], service_working_dir: Optional[str] = None
+    ):
         """
         Prepares volumes for a service.
-        
+
         :param mounts: List of volume mounts.
         :param service_working_dir: The directory where the service will run.
         """
         for mount in mounts:
             source_path = self.resolve_source(mount.source)
             target_path = self.resolve_target(mount.target, service_working_dir)
-            
+
             if not os.path.exists(source_path):
                 os.makedirs(source_path, exist_ok=True)
-                
+
             print(f"Mapping volume: {source_path} -> {target_path}")
-            
+
             # Ensure target parent directory exists
             target_parent = os.path.dirname(target_path)
             if target_parent:
                 os.makedirs(target_parent, exist_ok=True)
-                
+
             try:
                 if os.path.exists(target_path):
                     if os.path.islink(target_path) or os.path.isdir(target_path):
                         # If it's already there, we might want to skip or update
                         # For now, let's just skip if it's the same
-                        if os.path.abspath(os.path.realpath(target_path)) == os.path.abspath(source_path):
+                        if os.path.abspath(
+                            os.path.realpath(target_path)
+                        ) == os.path.abspath(source_path):
                             continue
                         # Otherwise, we might need to remove and re-link
                         if os.path.islink(target_path):
@@ -228,20 +238,22 @@ class VolumeManager:
                         shutil.copy2(source_path, target_path)
             except Exception as e:
                 print(f"Error preparing volume {mount.source}: {e}")
-    
-    def prepare_tmpfs(self, tmpfs_mounts: List[str], rootfs: Optional[str] = None) -> List[str]:
+
+    def prepare_tmpfs(
+        self, tmpfs_mounts: List[str], rootfs: Optional[str] = None
+    ) -> List[str]:
         """
         Prepare tmpfs mounts.
-        
+
         Args:
             tmpfs_mounts: List of tmpfs target paths.
             rootfs: Optional rootfs path for container.
-            
+
         Returns:
             List of successfully mounted paths.
         """
         mounted = []
-        
+
         for tmpfs_spec in tmpfs_mounts:
             # Parse tmpfs spec (can be just path or "path:opts")
             if ":" in tmpfs_spec:
@@ -249,47 +261,48 @@ class VolumeManager:
             else:
                 target = tmpfs_spec
                 opts = ""
-            
+
             # Resolve path
             if rootfs:
                 full_path = os.path.join(rootfs, target.lstrip("/"))
             else:
                 full_path = target
-            
+
             # Create directory
             os.makedirs(full_path, exist_ok=True)
-            
+
             # On Linux, try to mount actual tmpfs
             if self._is_linux:
                 try:
                     if os.geteuid() == 0:
                         import ctypes
+
                         libc = ctypes.CDLL("libc.so.6", use_errno=True)
-                        
+
                         # Parse options
                         mount_opts = ""
                         if opts:
                             mount_opts = opts
-                        
+
                         ret = libc.mount(
                             b"tmpfs",
-                            full_path.encode('utf-8'),
+                            full_path.encode("utf-8"),
                             b"tmpfs",
                             0,
-                            mount_opts.encode('utf-8') if mount_opts else None
+                            mount_opts.encode("utf-8") if mount_opts else None,
                         )
-                        
+
                         if ret == 0:
                             mounted.append(full_path)
                             print(f"Mounted tmpfs at {full_path}")
                             continue
                 except Exception as e:
                     print(f"Warning: Failed to mount tmpfs at {full_path}: {e}")
-            
+
             # Fallback: just create an empty directory (data won't persist anyway)
             print(f"Using regular directory for tmpfs at {full_path}")
             mounted.append(full_path)
-        
+
         return mounted
 
     def resolve_source(self, source: str) -> str:
@@ -302,13 +315,18 @@ class VolumeManager:
         # Check if it's a named volume
         if source in self._volumes:
             return self._volumes[source].path
-        
+
         # Check if it looks like a named volume (no path separators, no dots at start)
-        if not os.path.isabs(source) and not source.startswith('.') and '/' not in source and '\\' not in source:
+        if (
+            not os.path.isabs(source)
+            and not source.startswith(".")
+            and "/" not in source
+            and "\\" not in source
+        ):
             # Create as named volume
             vol = self.create_volume(source)
             return vol.path
-        
+
         return os.path.abspath(os.path.join(self.base_dir, source))
 
     def resolve_target(self, target: str, working_dir: Optional[str] = None) -> str:
@@ -322,28 +340,30 @@ class VolumeManager:
         if os.path.isabs(target):
             # On Windows, absolute paths like /app/data are problematic.
             # We'll treat them as relative to the base_dir or root of drive if they look like /...
-            if target.startswith('/') or target.startswith('\\'):
-                return os.path.abspath(os.path.join(self.base_dir, target.lstrip('/\\')))
+            if target.startswith("/") or target.startswith("\\"):
+                return os.path.abspath(
+                    os.path.join(self.base_dir, target.lstrip("/\\"))
+                )
             return target
-        
+
         # Relative to working_dir if provided, else base_dir
         root = working_dir if working_dir else self.base_dir
         return os.path.abspath(os.path.join(root, target))
-    
+
     def get_volume_size(self, name: str) -> int:
         """
         Get the size of a named volume in bytes.
-        
+
         Args:
             name: Volume name.
-            
+
         Returns:
             Size in bytes.
         """
         vol = self._volumes.get(name)
         if not vol or not os.path.exists(vol.path):
             return 0
-        
+
         total = 0
         for dirpath, dirnames, filenames in os.walk(vol.path):
             for f in filenames:
@@ -351,21 +371,21 @@ class VolumeManager:
                 if os.path.isfile(fp):
                     total += os.path.getsize(fp)
         return total
-    
+
     def prune(self, all_unused: bool = False) -> Dict[str, Any]:
         """
         Remove unused volumes.
-        
+
         Args:
             all_unused: Remove all unused volumes.
-            
+
         Returns:
             Dictionary with removal statistics.
         """
         # For now, just remove empty volumes
         removed = []
         freed = 0
-        
+
         for name, vol in list(self._volumes.items()):
             if os.path.exists(vol.path):
                 try:
@@ -376,10 +396,7 @@ class VolumeManager:
                         del self._volumes[name]
                 except OSError:
                     pass
-        
+
         self._save_index()
-        
-        return {
-            "volumes_removed": removed,
-            "space_reclaimed": freed
-        }
+
+        return {"volumes_removed": removed, "space_reclaimed": freed}

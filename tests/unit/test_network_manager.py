@@ -22,12 +22,12 @@ from d2p.MODELS.service_definition import ServiceDefinition
 
 class TestNetworkManager:
     """Tests for NetworkManager."""
-    
+
     def test_init_creates_default_network(self):
         """Test that default network is created."""
         mgr = NetworkManager()
         assert "d2p_default" in mgr.networks
-    
+
     def test_create_network(self):
         """Test network creation."""
         mgr = NetworkManager()
@@ -35,7 +35,7 @@ class TestNetworkManager:
         result = mgr.create_network(config)
         assert result is True
         assert "test-net" in mgr.networks
-    
+
     def test_remove_network(self):
         """Test network removal."""
         mgr = NetworkManager()
@@ -44,7 +44,7 @@ class TestNetworkManager:
         result = mgr.remove_network("test-net")
         assert result is True
         assert "test-net" not in mgr.networks
-    
+
     def test_connect_service(self):
         """Test connecting a service to a network."""
         mgr = NetworkManager()
@@ -53,7 +53,7 @@ class TestNetworkManager:
         assert "web" in mgr.service_networks
         assert "web" in mgr.dns_entries
         assert "webserver" in mgr.dns_entries
-    
+
     def test_get_service_discovery_env(self):
         """Test service discovery environment generation."""
         mgr = NetworkManager()
@@ -61,14 +61,14 @@ class TestNetworkManager:
         env = mgr.get_service_discovery_env(["db"])
         assert "DB_HOST" in env
         assert env["DB_HOST"] != ""
-    
+
     def test_resolve_hostname(self):
         """Test hostname resolution."""
         mgr = NetworkManager()
         mgr.connect_service("api", "d2p_default")
         ip = mgr.resolve_hostname("api")
         assert ip is not None
-    
+
     def test_generate_hosts_content(self):
         """Test hosts file content generation."""
         mgr = NetworkManager()
@@ -76,7 +76,7 @@ class TestNetworkManager:
         content = mgr.generate_hosts_file_content()
         assert "localhost" in content
         assert "web" in content
-    
+
     def test_cleanup(self):
         """Test cleanup."""
         mgr = NetworkManager()
@@ -88,7 +88,7 @@ class TestNetworkManager:
 
 class TestNetworkMode:
     """Tests for NetworkMode enum."""
-    
+
     def test_network_modes(self):
         """Test network mode values."""
         assert NetworkMode.BRIDGE == "bridge"

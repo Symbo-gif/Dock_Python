@@ -18,10 +18,12 @@ Dependency resolution for services to determine startup and shutdown order.
 from typing import List, Dict, Set
 from ..MODELS.orchestration_config import OrchestrationConfig
 
+
 class DependencyResolver:
     """
     Resolves the startup and shutdown order of services based on their dependencies.
     """
+
     def resolve_order(self, config: OrchestrationConfig) -> List[str]:
         """
         Determines the correct order to start services using topological sort.
@@ -32,7 +34,7 @@ class DependencyResolver:
         """
         services = config.services
         dependencies = {name: set(svc.depends_on) for name, svc in services.items()}
-        
+
         ordered = []
         visited = set()
         processing = set()
@@ -46,7 +48,7 @@ class DependencyResolver:
             if name not in visited:
                 processing.add(name)
                 for dep in dependencies.get(name, []):
-                    if dep in services: # Only depend on services defined in the config
+                    if dep in services:  # Only depend on services defined in the config
                         visit(dep)
                 processing.remove(name)
                 visited.add(name)
@@ -54,5 +56,5 @@ class DependencyResolver:
 
         for name in services:
             visit(name)
-            
+
         return ordered

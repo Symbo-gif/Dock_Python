@@ -51,11 +51,13 @@ if __name__ == "__main__":
     main()
 """
 
+
 class PythonPackageConverter:
     """
     Converts a Docker Compose setup into a native Python package structure
     that uses d2p to run services.
     """
+
     def __init__(self, config: OrchestrationConfig, source_dir: str):
         """
         Initializes the converter.
@@ -74,10 +76,10 @@ class PythonPackageConverter:
         :return: The path to the generated package.
         """
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # 1. Copy original source (excluding what we don't want)
         for item in os.listdir(self.source_dir):
-            if item in ['.git', '__pycache__', '.pytest_cache', output_dir]:
+            if item in [".git", "__pycache__", ".pytest_cache", output_dir]:
                 continue
             s = os.path.join(self.source_dir, item)
             d = os.path.join(output_dir, item)
@@ -85,16 +87,16 @@ class PythonPackageConverter:
                 shutil.copytree(s, d, dirs_exist_ok=True)
             else:
                 shutil.copy2(s, d)
-                
+
         # 2. Generate main entry point
-        with open(os.path.join(output_dir, "run_native.py"), 'w') as f:
+        with open(os.path.join(output_dir, "run_native.py"), "w") as f:
             f.write(PACKAGE_MAIN_TEMPLATE)
-            
+
         # 3. Create a requirements.txt if not exists
         req_file = os.path.join(output_dir, "requirements_native.txt")
-        with open(req_file, 'w') as f:
+        with open(req_file, "w") as f:
             f.write("d2p\n")
-            
+
         print(f"Python package generated in {output_dir}")
         print("You can run it with: python run_native.py")
         return output_dir

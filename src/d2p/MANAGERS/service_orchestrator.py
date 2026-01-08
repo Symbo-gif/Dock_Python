@@ -23,10 +23,12 @@ from .network_manager import NetworkManager
 from .health_monitor import HealthMonitor
 import time
 
+
 class ServiceOrchestrator:
     """
     Orchestrates multiple services based on their dependencies.
     """
+
     def __init__(self, config: OrchestrationConfig, base_dir: str = "."):
         """
         Initializes the orchestrator.
@@ -39,13 +41,15 @@ class ServiceOrchestrator:
         self.resolver = DependencyResolver()
         self.network_manager = NetworkManager()
         self.managers: Dict[str, ProcessManager] = {}
-        
+
         for name, svc_def in config.services.items():
             # Allocate ports before creating manager
             self.network_manager.allocate_ports(svc_def)
             self.managers[name] = ProcessManager(svc_def, base_dir)
-            
-        self.health_monitor = HealthMonitor(self.managers, on_failure=self._handle_service_failure)
+
+        self.health_monitor = HealthMonitor(
+            self.managers, on_failure=self._handle_service_failure
+        )
 
     def up(self):
         """
@@ -53,15 +57,17 @@ class ServiceOrchestrator:
         """
         order = self.resolver.resolve_order(self.config)
         print(f"Starting services in order: {', '.join(order)}")
-        
+
         # Get discovery env for all services
-        discovery_env = self.network_manager.get_service_discovery_env(list(self.config.services.keys()))
-        
+        discovery_env = self.network_manager.get_service_discovery_env(
+            list(self.config.services.keys())
+        )
+
         for name in order:
             print(f"Starting service: {name}...")
             manager = self.managers[name]
             manager.start(extra_env=discovery_env)
-            
+
             # Wait for service to be healthy if health check is defined
             if manager.service_def.health_check:
                 self._wait_for_healthy(name)
@@ -80,19 +86,22 @@ class ServiceOrchestrator:
         manager = self.managers[name]
         hc = manager.service_def.health_check
         print(f"Waiting for {name} to become healthy...")
-        
+
         # This is a bit simplified, ideally we'd use the HealthMonitor's check logic
         # For now, let's just check if it's running
         start_time = time.time()
-        timeout = hc.start_period + (hc.timeout * hc.retries)
-        
+        if hc is not None:
+            timeout = hc.start_period + (hc.timeout * hc.retries)
+        else:
+            timeout = 30.0  # Default timeout if no health check
+
         while time.time() - start_time < timeout:
             if manager.status() == "running":
                 # In a real system, we'd run the actual health check command here
                 print(f"Service {name} is running.")
                 return
             time.sleep(1)
-        
+
         print(f"Warning: Service {name} failed to become healthy within timeout.")
 
     def down(self):
@@ -126,5 +135,7 @@ class ServiceOrchestrator:
         if policy.condition == "always" or policy.condition == "on-failure":
             print(f"Restarting service {name}...")
             # We should probably have a retry count here
-            discovery_env = self.network_manager.get_service_discovery_env(list(self.config.services.keys()))
+            discovery_env = self.network_manager.get_service_discovery_env(
+                list(self.config.services.keys())
+            )
             manager.start(extra_env=discovery_env)
