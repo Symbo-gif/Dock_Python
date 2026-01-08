@@ -71,7 +71,7 @@ class HealthMonitor:
         self.interval = interval
         self.on_failure = on_failure
         self.running = False
-        self.thread = None
+        self.thread: Optional[threading.Thread] = None
 
         # Health tracking per service
         self._health: Dict[str, ServiceHealth] = {}

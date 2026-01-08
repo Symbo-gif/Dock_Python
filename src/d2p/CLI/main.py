@@ -18,6 +18,7 @@ Command Line Interface for D2P.
 import click
 import os
 import sys
+from typing import Union
 from ..PARSERS.compose_parser import ComposeParser
 from ..MANAGERS.service_orchestrator import ServiceOrchestrator
 from ..MANAGERS.log_aggregator import LogAggregator
@@ -129,7 +130,9 @@ def convert(ctx, type, out):
         return
 
     if type == "python":
-        converter = PythonPackageConverter(config, source_dir=".")
+        converter: Union[PythonPackageConverter, SystemdConverter] = (
+            PythonPackageConverter(config, source_dir=".")
+        )
         converter.convert(out)
     elif type == "systemd":
         converter = SystemdConverter(config)
