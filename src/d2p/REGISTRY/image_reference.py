@@ -26,41 +26,42 @@ from dataclasses import dataclass
 class ImageReference:
     """
     Parsed Docker image reference.
-    
+
     Examples:
         - nginx -> docker.io/library/nginx:latest
         - nginx:1.21 -> docker.io/library/nginx:1.21
         - myuser/myimage:v1 -> docker.io/myuser/myimage:v1
         - gcr.io/project/image@sha256:abc123... -> gcr.io/project/image@sha256:abc123...
     """
+
     registry: str
     repository: str
     tag: Optional[str] = None
     digest: Optional[str] = None
-    
+
     DEFAULT_REGISTRY = "docker.io"
     DEFAULT_TAG = "latest"
-    
+
     @classmethod
     def parse(cls, reference: str) -> "ImageReference":
         """
         Parse a Docker image reference string.
-        
+
         Args:
             reference: Image reference string (e.g., 'nginx:latest', 'myuser/myimage:v1')
-            
+
         Returns:
             Parsed ImageReference object.
         """
         if not reference:
             raise ValueError("Empty image reference")
-        
+
         # Handle digest format (image@sha256:...)
         digest = None
         if "@" in reference:
             ref_part, digest = reference.rsplit("@", 1)
             reference = ref_part
-        
+
         # Handle tag format (image:tag)
         tag = None
         if ":" in reference:
@@ -68,16 +69,16 @@ class ImageReference:
             # or for a tag
             last_colon = reference.rfind(":")
             before_colon = reference[:last_colon]
-            after_colon = reference[last_colon + 1:]
-            
+            after_colon = reference[last_colon + 1 :]
+
             # If there's a slash after the colon, it's a port, not a tag
             if "/" not in after_colon and not after_colon.isdigit():
                 tag = after_colon
                 reference = before_colon
-        
+
         # Parse registry and repository
         parts = reference.split("/")
-        
+
         if len(parts) == 1:
             # Just image name: nginx -> docker.io/library/nginx
             registry = cls.DEFAULT_REGISTRY
@@ -97,18 +98,13 @@ class ImageReference:
             # Full path: registry/path/to/image
             registry = parts[0]
             repository = "/".join(parts[1:])
-        
+
         # Use default tag if none specified and no digest
         if not tag and not digest:
             tag = cls.DEFAULT_TAG
-        
-        return cls(
-            registry=registry,
-            repository=repository,
-            tag=tag,
-            digest=digest
-        )
-    
+
+        return cls(registry=registry, repository=repository, tag=tag, digest=digest)
+
     @property
     def full_name(self) -> str:
         """Get full image name with registry."""
@@ -118,7 +114,7 @@ class ImageReference:
         if self.tag:
             return f"{name}:{self.tag}"
         return name
-    
+
     @property
     def short_name(self) -> str:
         """Get short image name (without registry if default)."""
@@ -133,7 +129,7 @@ class ImageReference:
                 return f"{repo}:{self.tag}"
             return repo
         return self.full_name
-    
+
     @property
     def registry_url(self) -> str:
         """Get the registry URL for API calls."""
@@ -142,16 +138,16 @@ class ImageReference:
         if "://" in self.registry:
             return self.registry
         return f"https://{self.registry}"
-    
+
     @property
     def auth_url(self) -> str:
         """Get the authentication URL for the registry."""
         if self.registry == "docker.io":
             return "https://auth.docker.io"
         return self.registry_url
-    
+
     def __str__(self) -> str:
         return self.short_name
-    
+
     def __repr__(self) -> str:
         return f"ImageReference({self.full_name})"

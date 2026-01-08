@@ -38,10 +38,12 @@ Restart={{ restart_policy }}
 WantedBy=multi-user.target
 """
 
+
 class SystemdConverter:
     """
     Converts a Docker Compose configuration into systemd unit files.
     """
+
     def __init__(self, config: OrchestrationConfig, base_dir: str = "."):
         """
         Initializes the systemd converter.
@@ -61,7 +63,7 @@ class SystemdConverter:
         :return: The path to the output directory.
         """
         os.makedirs(output_dir, exist_ok=True)
-        
+
         for name, svc in self.config.services.items():
             content = self.template.render(
                 name=name,
@@ -71,11 +73,11 @@ class SystemdConverter:
                 base_dir=self.base_dir,
                 command=svc.entrypoint + svc.cmd,
                 environment=svc.environment,
-                restart_policy=svc.restart_policy.condition
+                restart_policy=svc.restart_policy.condition,
             )
-            
-            with open(os.path.join(output_dir, f"d2p-{name}.service"), 'w') as f:
+
+            with open(os.path.join(output_dir, f"d2p-{name}.service"), "w") as f:
                 f.write(content)
-                
+
         print(f"Systemd service files generated in {output_dir}")
         return output_dir

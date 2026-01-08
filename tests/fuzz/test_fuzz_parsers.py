@@ -19,8 +19,10 @@ from d2p.PARSERS.dockerfile_parser import DockerfileParser
 from d2p.PARSERS.compose_parser import ComposeParser
 from d2p.PARSERS.env_parser import EnvParser
 
+
 def random_string(length):
-    return ''.join(random.choice(string.printable) for _ in range(length))
+    return "".join(random.choice(string.printable) for _ in range(length))
+
 
 def test_fuzz_dockerfile_parser():
     parser = DockerfileParser()
@@ -30,9 +32,10 @@ def test_fuzz_dockerfile_parser():
             parser.parse_from_string(content)
         except Exception as e:
             # We don't want it to crash with unhandled exceptions like IndexError or AttributeError
-            # though some exceptions like re.error might be okay if we don't catch them, 
+            # though some exceptions like re.error might be okay if we don't catch them,
             # but ideally it should be robust.
             pass
+
 
 def test_fuzz_compose_parser():
     parser = ComposeParser()
@@ -44,6 +47,7 @@ def test_fuzz_compose_parser():
         except Exception:
             pass
 
+
 def test_fuzz_env_parser():
     parser = EnvParser()
     for _ in range(100):
@@ -53,18 +57,19 @@ def test_fuzz_env_parser():
         except Exception:
             pass
 
+
 def test_edge_cases_parsers():
     dockerfile_parser = DockerfileParser()
     compose_parser = ComposeParser()
-    
+
     # Empty string
     dockerfile_parser.parse_from_string("")
-    
+
     # Only whitespace
     dockerfile_parser.parse_from_string("   \n\t  ")
-    
+
     # Very long line
     dockerfile_parser.parse_from_string("RUN " + "a" * 10000)
-    
+
     # Many line continuations
     dockerfile_parser.parse_from_string("RUN echo \\\n" * 100 + "hello")

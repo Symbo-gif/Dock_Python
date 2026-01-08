@@ -12,3 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+D2P - Docker to Python
+
+A production-ready Docker alternative that runs containerized workloads 
+as native Python processes with container-like isolation on Linux.
+"""
+
+__version__ = "0.1.0"
+__author__ = "Michael Maillet, Damien Davison, Sacha Davison"
+__license__ = "Apache-2.0"
